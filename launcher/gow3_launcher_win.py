@@ -293,7 +293,7 @@ def heading_text(text, every_language=False):
 # launcher's own settings.json (passed to run.py as environment variables).
 
 INI_FLAGS = {'cheat_double_jumps', 'cheat_very_hard', 'object_motion', 'show_fps', 'vsync', 'async_shaders', 'deferred_readback',
-             'stale_readback'}
+             'stale_readback', 'fsr1', 'rcas'}
 # The graphics keys are also in the in-game menu (Insert / R3+L2); run.py reads the startup ones.
 INI_DEFAULTS = {'upscaler': 'fsr3', 'preset': '1',
                 'object_motion': '1', 'show_fps': '1', 'output_res': '1920x1080',
@@ -301,7 +301,8 @@ INI_DEFAULTS = {'upscaler': 'fsr3', 'preset': '1',
                 'async_shaders': '1', 'deferred_readback': '1', 'stale_readback': '1',
                 'render_resolution': 'native', 'engine_fps': '120',
                 'frames_queued': '1', 'cheat_very_hard': '0', 'cheat_double_jumps': '0',
-                'anisotropy': '0', 'vibration': '100'}
+                'anisotropy': '0', 'vibration': '100',
+                'fsr1': '0', 'rcas': '1', 'rcas_strength': '75', 'fsr1_colorspace': 'perceptual'}
 DISPLAY_MODES = [('windowed', ('Windowed',)), ('borderless', ('Borderless',)), ('fullscreen', ('Fullscreen',))]
 ANISOTROPY = [('0', ('Game default',)), ('2', ('2x',)), ('4', ('4x',)), ('8', ('8x',)), ('16', ('16x',))]
 FPS_LIMITS = [('30', ('30',)), ('60', ('60',)), ('120', ('120',)), ('240', ('240',)), ('0', ('Unlimited',))]
@@ -1217,6 +1218,73 @@ class Launcher:
         # self.check(f, 'object_motion', 'ini', _('Object motion vectors', 'Векторы движения объектов'),
         #            _('Less ghosting on characters, cloth and weapons; costs about 10% FPS.',
         #              'Меньше гостинга на персонажах и одежде; стоит около 10% FPS.'))
+        self._build_fsr1_section(f)
+
+    def _build_fsr1_section(self, f):
+        """FSR 1 (EASU) spatial upscaling, RCAS sharpening, and colorspace controls."""
+        tk, ttk = self.tk, self.ttk
+        self.section(f, _('Spatial Upscaling (FSR 1)'))
+
+        # --- FSR 1 (EASU) checkbox ---
+        fsr1_var = self.var('fsr1', 'ini')
+        self.check(f, 'fsr1', 'ini', _('FSR 1.0 Upscaling (EASU)'),
+                   _('Spatial upscaling: enlarges the Render resolution to the window. '
+                     'Requires Render resolution to be lower than output (e.g. 720p → 1080p).'))
+
+        # EASU-cannot-run warning: shown when fsr1 is on but render_resolution is native.
+        render_var = self.var('render_resolution', 'ini')
+        easu_warn = ttk.Label(f,
+                              text=_('EASU requires render resolution lower than output. '
+                                     'Set render resolution to 720p or lower.'),
+                              style='Warning.TLabel', wraplength=self.px(640))
+        easu_warn.grid(row=self.next_row(f), column=0, columnspan=2, sticky='we', pady=(2, 0))
+
+        def _update_easu_warn(*_args):
+            fsr1_on = fsr1_var.get()
+            rr = render_var.get()
+            # native == 1080p == same as output; any explicit lower resolution is fine.
+            show = bool(fsr1_on) and rr in ('native', '1080p', '')
+            if show:
+                easu_warn.grid()
+            else:
+                easu_warn.grid_remove()
+
+        fsr1_var.trace_add('write', _update_easu_warn)
+        render_var.trace_add('write', _update_easu_warn)
+        _update_easu_warn()  # set initial state
+
+        # --- Colorspace option (only relevant when FSR 1 is on) ---
+        FSR1_COLORSPACE = [('perceptual', ('Perceptual (gamma 2.0)',)), ('linear', ('Linear (bypass)',))]
+        cs_box = self.choice(f, 'fsr1_colorspace', 'ini', FSR1_COLORSPACE)
+        self.row(f, _('FSR 1 color space'), cs_box,
+                 _('Perceptual: EASU and RCAS operate in gamma-encoded space as AMD recommends. '
+                   'Linear: bypass the conversion (old behavior).'))
+
+        def _update_cs_state(*_args):
+            state = 'readonly' if fsr1_var.get() else 'disabled'
+            cs_box.configure(state=state)
+
+        fsr1_var.trace_add('write', _update_cs_state)
+        _update_cs_state()  # set initial state
+
+        # --- RCAS (screen sharpening) checkbox — independent of fsr1 ---
+        self.section(f, _('Screen Sharpening (RCAS)'))
+        self.check(f, 'rcas', 'ini', _('Screen sharpening (RCAS)'),
+                   _('Sharpens the final image. Works with or without FSR 1 upscaling.'))
+
+        # RCAS strength slider
+        holder = ttk.Frame(f)
+        strength = self.var('rcas_strength', 'ini')
+        tk.Scale(holder, from_=0, to=100, orient='horizontal', variable=strength, showvalue=False,
+                 length=self.px(260), width=self.px(12), sliderlength=self.px(18),
+                 bg=ACCENT, troughcolor=CARD, activebackground=ACCENT_HI,
+                 highlightthickness=0, bd=0, sliderrelief='flat').pack(side='left')
+        value_label = ttk.Label(holder, width=5)
+        value_label.pack(side='left', padx=10)
+        show_strength = lambda *_a: value_label.configure(text=f'{int(float(strength.get()))}%')
+        strength.trace_add('write', show_strength)
+        show_strength()
+        self.row(f, _('Sharpening strength'), holder)
 
     def build_display(self, f):
         """Window and overlay: the top of the Graphics page."""
