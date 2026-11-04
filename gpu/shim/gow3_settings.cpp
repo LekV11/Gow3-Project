@@ -187,8 +187,9 @@ void Load() {
         {"GOW3_UPSCALE_PRESET", "preset"},            {"GOW3_OBJECT_MOTION", "object_motion"},
         {"GOW3_ASYNC_SHADERS", "async_shaders"},      {"GOW3_DEFERRED_READBACK", "deferred_readback"},
         {"GOW3_STALE_READBACK", "stale_readback"},     {"GOW3_FSR1", "fsr1"},
-        {"GOW3_RCAS", "rcas"},                        {"GOW3_FRAMES_AHEAD", "frames_queued"},
-        {"GOW3_ANISOTROPY", "anisotropy"},            {"GOW3_VIBRATION", "vibration"},
+        {"GOW3_RCAS", "rcas"},                        {"GOW3_RCAS_STRENGTH", "rcas_strength"},
+        {"GOW3_FRAMES_AHEAD", "frames_queued"},       {"GOW3_ANISOTROPY", "anisotropy"},
+        {"GOW3_VIBRATION", "vibration"},
     };
     for (const auto& [env, key] : env_keys) {
         if (const char* value = std::getenv(env); value && value[0]) {
@@ -208,6 +209,10 @@ void Load() {
     v.startup_deferred_readback = v.deferred_readback;
     v.startup_stale_readback = v.stale_readback;
     v.startup_anisotropy = v.anisotropy;
+    std::printf("[FSR] EASU=%s RCAS=%s rcas_strength=%d render=%dx%d output=%dx%d colorspace=perceptual\n",
+                v.fsr1 ? "on" : "off", v.rcas ? "on" : "off", v.rcas_strength.load(),
+                v.image_width.load(), v.image_height.load(),
+                v.window_width.load(), v.window_height.load());
 }
 
 bool GraphicsNeedRestart() {
