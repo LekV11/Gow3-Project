@@ -648,7 +648,13 @@ Frame* Presenter::PrepareFrame(const Libraries::VideoOut::BufferAttributeGroup& 
     fsr_settings.enable = graphics.fsr1;
     fsr_settings.use_rcas = graphics.rcas;
     fsr_settings.rcas_attenuation = Gow3Graphics::RcasAttenuation(graphics.rcas_strength);
-    fsr_settings.colorspace_perceptual = graphics.fsr1_colorspace_perceptual.load();
+    // colorspace_perceptual only takes effect when EASU actually dispatches:
+    // fsr1 must be on AND render size must be smaller than output size.
+    const bool easu_runs_this_frame =
+        graphics.fsr1.load() &&
+        image_size.width < static_cast<uint32_t>(frame->width) &&
+        image_size.height < static_cast<uint32_t>(frame->height);
+    fsr_settings.colorspace_perceptual = easu_runs_this_frame && graphics.fsr1_colorspace_perceptual.load();
     Gow3Settings::Get().image_width = int(image_size.width);
     Gow3Settings::Get().image_height = int(image_size.height);
     Gow3Settings::Get().window_width = int(frame->width);

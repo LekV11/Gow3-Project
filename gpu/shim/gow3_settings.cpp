@@ -216,7 +216,7 @@ void Load() {
                 v.fsr1 ? "on" : "off", v.rcas ? "on" : "off", v.rcas_strength.load(),
                 v.image_width.load(), v.image_height.load(),
                 v.window_width.load(), v.window_height.load(),
-                v.fsr1_colorspace_perceptual.load() ? "perceptual" : "linear");
+                v.fsr1_colorspace_perceptual.load() ? "perceptual(requires EASU)" : "linear");
 }
 
 bool GraphicsNeedRestart() {

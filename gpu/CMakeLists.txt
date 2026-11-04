@@ -405,6 +405,8 @@ add_executable(graphics-settings-test EXCLUDE_FROM_ALL ../tests/test_graphics_se
     shim/gow3_settings.cpp)
 target_include_directories(graphics-settings-test PRIVATE shim)
 target_compile_options(graphics-settings-test PRIVATE -UNDEBUG)
+add_executable(fsr1-colorspace-test EXCLUDE_FROM_ALL ../tests/test_fsr1_colorspace.cpp)
+target_compile_options(fsr1-colorspace-test PRIVATE -UNDEBUG -Wall -Wextra -Werror)
 add_executable(actor-hook-test EXCLUDE_FROM_ALL ../tests/test_actor_hook.cpp)
 target_include_directories(actor-hook-test PRIVATE shim)
 target_compile_options(actor-hook-test PRIVATE -UNDEBUG -Wall -Wextra -Werror)
