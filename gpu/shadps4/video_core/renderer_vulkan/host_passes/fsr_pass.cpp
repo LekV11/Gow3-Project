@@ -196,6 +196,7 @@ vk::ImageView FsrPass::Render(vk::CommandBuffer cmdbuf, vk::ImageView input,
                static_cast<AF1>(input_size.width), static_cast<AF1>(input_size.height), (AF1)width,
                (AF1)height);
     consts.Sample[0] = hdr && !settings.use_rcas ? 1 : 0;
+    consts.Sample[1] = settings.colorspace_perceptual ? 1u : 0u;
 
     if (settings.use_rcas) {
 
@@ -274,6 +275,7 @@ vk::ImageView FsrPass::Render(vk::CommandBuffer cmdbuf, vk::ImageView input,
             consts = {};
             FsrRcasCon(reinterpret_cast<AU1*>(&consts.Const0), settings.rcas_attenuation);
             consts.Sample[0] = hdr ? 1 : 0;
+            consts.Sample[1] = settings.colorspace_perceptual ? 1u : 0u;
 
             std::array<vk::DescriptorImageInfo, 3> img_info{{
                 {

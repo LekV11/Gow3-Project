@@ -15,6 +15,7 @@ public:
         bool enable{true};
         bool use_rcas{true};
         float rcas_attenuation{0.25f};
+        bool colorspace_perceptual{true};  // true = gamma2.0 wrap around EASU+RCAS
     };
 
     void Create(vk::Device device, VmaAllocator allocator, u32 num_images);

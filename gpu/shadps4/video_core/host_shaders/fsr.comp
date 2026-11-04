@@ -64,6 +64,8 @@ void CurrFilter(AU2 pos)
     #if SAMPLE_EASU
     AH3 c;
     FsrEasuH(c, pos, Const0, Const1, Const2, Const3);
+    if (Sample.y == 1u && Sample.x == 0u)
+        c = AH3(sqrt(AF3(c)));  // linear -> gamma 2.0 encode (perceptual mode, non-HDR)
     if (Sample.x == 1)
     c *= c;
     imageStore(OutputTexture, ASU2(pos), AH4(c, 1));
@@ -71,6 +73,8 @@ void CurrFilter(AU2 pos)
 #if SAMPLE_RCAS
     AH3 c;
     FsrRcasH(c.r, c.g, c.b, pos, Const0);
+    if (Sample.y == 1u)
+        c = AH3(AF3(c) * AF3(c));  // gamma 2.0 decode: perceptual -> linear after RCAS
     if (Sample.x == 1)
     c *= c;
     imageStore(OutputTexture, ASU2(pos), AH4(c, 1));

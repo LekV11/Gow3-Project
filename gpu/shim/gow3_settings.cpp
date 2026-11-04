@@ -101,6 +101,8 @@ void Set(Values& v, const std::string& key, const std::string& value) {
         v.async_shaders = i != 0;
     } else if (key == "fsr1") {
         v.fsr1 = i != 0;
+    } else if (key == "fsr1_colorspace") {
+        v.fsr1_colorspace_perceptual = (value != "linear");
     } else if (key == "rcas") {
         v.rcas = i != 0;
     } else if (key == "rcas_strength") {
@@ -188,6 +190,7 @@ void Load() {
         {"GOW3_ASYNC_SHADERS", "async_shaders"},      {"GOW3_DEFERRED_READBACK", "deferred_readback"},
         {"GOW3_STALE_READBACK", "stale_readback"},     {"GOW3_FSR1", "fsr1"},
         {"GOW3_RCAS", "rcas"},                        {"GOW3_RCAS_STRENGTH", "rcas_strength"},
+        {"GOW3_FSR1_COLORSPACE", "fsr1_colorspace"},
         {"GOW3_FRAMES_AHEAD", "frames_queued"},       {"GOW3_ANISOTROPY", "anisotropy"},
         {"GOW3_VIBRATION", "vibration"},
     };
@@ -209,10 +212,11 @@ void Load() {
     v.startup_deferred_readback = v.deferred_readback;
     v.startup_stale_readback = v.stale_readback;
     v.startup_anisotropy = v.anisotropy;
-    std::printf("[FSR] EASU=%s RCAS=%s rcas_strength=%d render=%dx%d output=%dx%d colorspace=perceptual\n",
+    std::printf("[FSR] EASU=%s RCAS=%s rcas_strength=%d render=%dx%d output=%dx%d colorspace=%s\n",
                 v.fsr1 ? "on" : "off", v.rcas ? "on" : "off", v.rcas_strength.load(),
                 v.image_width.load(), v.image_height.load(),
-                v.window_width.load(), v.window_height.load());
+                v.window_width.load(), v.window_height.load(),
+                v.fsr1_colorspace_perceptual.load() ? "perceptual" : "linear");
 }
 
 bool GraphicsNeedRestart() {
@@ -312,12 +316,14 @@ void Save() {
                  v.overlay_opacity.load(), v.overlay_layout.load(), v.menu_tab.load());
     std::fprintf(file,
                  "display_mode=%s\nvsync=%d\nfps_limit=%d\nasync_shaders=%d\n"
-                 "fsr1=%d\nrcas=%d\nrcas_strength=%d\nframes_queued=%d\n"
+                 "fsr1=%d\nrcas=%d\nrcas_strength=%d\nfsr1_colorspace=%s\nframes_queued=%d\n"
                  "render_resolution=%s\nengine_fps=%d\ndeferred_readback=%d\nstale_readback=%d\n"
                  "restart_unconfirmed=%d\n",
                  Gow3Graphics::DisplayModeKeys[std::clamp(v.display_mode.load(), 0, 2)].data(),
                  int(v.vsync.load()), v.fps_limit.load(), int(v.async_shaders.load()),
-                 int(v.fsr1.load()), int(v.rcas.load()), v.rcas_strength.load(), v.frames_queued.load(),
+                 int(v.fsr1.load()), int(v.rcas.load()), v.rcas_strength.load(),
+                 v.fsr1_colorspace_perceptual.load() ? "perceptual" : "linear",
+                 v.frames_queued.load(),
                  Gow3Graphics::Resolutions[std::clamp(v.render_resolution.load(), 0, 5)].data(),
                  v.engine_fps.load(), int(v.deferred_readback.load()), int(v.stale_readback.load()),
                  int(v.restart_unconfirmed.load()));

@@ -52,6 +52,15 @@ int main() {
     Gow3Settings::Load();
     assert(v.fsr1);
     _putenv_s("GOW3_FSR1", "");
+    // fsr1_colorspace_perceptual: default true; env var controls it.
+    assert(v.fsr1_colorspace_perceptual);  // default
+    _putenv_s("GOW3_FSR1_COLORSPACE", "linear");
+    Gow3Settings::Load();
+    assert(!v.fsr1_colorspace_perceptual);
+    _putenv_s("GOW3_FSR1_COLORSPACE", "perceptual");
+    Gow3Settings::Load();
+    assert(v.fsr1_colorspace_perceptual);
+    _putenv_s("GOW3_FSR1_COLORSPACE", "");
     assert(!Gow3Settings::GraphicsNeedRestart());
     assert(v.applied_engine_fps == 240);  // no GOW3_ENGINE_FPS: the configured rate
     _putenv_s("GOW3_ENGINE_FPS", "60");    // run.py: the frame rate patch did not apply
@@ -69,7 +78,7 @@ int main() {
     for (const char* line : {"display_mode=borderless\n", "vsync=0\n", "fps_limit=60\n", "async_shaders=0\n",
                              "render_resolution=1440p\n", "engine_fps=240\n", "deferred_readback=0\n",
                              "stale_readback=1\n", "fsr1=1\n", "rcas=0\n", "rcas_strength=40\n",
-                             "frames_queued=2\n"}) {
+                             "fsr1_colorspace=perceptual\n", "frames_queued=2\n"}) {
         assert(saved.find(line) != std::string::npos);
     }
 
